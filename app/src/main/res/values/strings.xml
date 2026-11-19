@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Plantão UTI</string>
+    <string name="channel_infusion_name">Alertas de Infusão Contínua</string>
+    <string name="channel_infusion_desc">Avisos sonoros e notificações antes do término previsto de drogas vasoativas e sedação.</string>
+</resources>
