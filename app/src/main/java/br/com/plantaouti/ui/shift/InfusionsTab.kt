@@ -95,7 +95,7 @@ fun InfusionsTab(viewModel: ShiftWorkspaceViewModel) {
                 Text("Nenhuma infusão contínua registrada", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Toque em "Nova Droga" para selecionar da lista pré-cadastrada ou informar outra droga.",
+                    "Toque em \"Nova Droga\" para selecionar da lista pré-cadastrada ou informar outra droga.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -522,9 +522,9 @@ private fun InfusionFormDialog(
             icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
             title = { Text("Dose fora da faixa de referência") },
             text = {
-                Text("$msg
+                Text("""$msg
 
-O aplicativo apenas registra o valor informado pelo profissional. Confirma o registro desta dose?")
+O aplicativo apenas registra o valor informado pelo profissional. Confirma o registro desta dose?""")
             },
             confirmButton = {
                 TextButton(onClick = {

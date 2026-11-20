@@ -1,5 +1,7 @@
 # 🏥 Plantão UTI — Registro Digital de Enfermagem em UTI (Android)
 
+> **🤖 Nota:** Este aplicativo foi desenvolvido com auxílio de IA (vibe coding) com intuito pessoal, de aprendizado e de testes.
+
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Android](https://img.shields.io/badge/Android-API%2026%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)

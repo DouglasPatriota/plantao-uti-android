@@ -148,7 +148,7 @@ fun PatientsScreen(
                     Text("Nenhum paciente no plantão", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Toque em "Novo Paciente" para iniciar a folha digital do leito.",
+                        "Toque em \"Novo Paciente\" para iniciar a folha digital do leito.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
