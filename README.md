@@ -1,10 +1,11 @@
 # 🏥 Plantão UTI — Registro Digital de Enfermagem em UTI (Android)
 
-> **🤖 Nota:** Este aplicativo foi desenvolvido com auxílio de IA (vibe coding) com intuito pessoal, de aprendizado e de testes.
+> **🤖 NOTA:** Este aplicativo foi **desenvolvido com auxílio de IA (vibe coding)** com intuito pessoal, de aprendizado e de testes.
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Android](https://img.shields.io/badge/Android-API%2026%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
+[![Vibe Coding](https://img.shields.io/badge/Desenvolvido%20com-IA%20%28Vibe%20Coding%29-8A2BE2?style=for-the-badge&logo=githubcopilot&logoColor=white)](https://github.com/DouglasPatriota/plantao-uti-android)
 [![Room + SQLCipher](https://img.shields.io/badge/Room%20%2B%20SQLCipher-Offline--First-006A6A?style=for-the-badge)](https://developer.android.com/training/data-storage/room)
 [![Hilt](https://img.shields.io/badge/Hilt-DI-1F5D7A?style=for-the-badge)](https://dagger.dev/hilt/)
 [![LGPD](https://img.shields.io/badge/Privacidade-LGPD%20Local-2E7D32?style=for-the-badge)](#privacidade-e-segurança-lgpd)
