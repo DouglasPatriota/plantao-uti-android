@@ -2,6 +2,7 @@ package br.com.plantaouti.ui.patients
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -50,7 +51,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.HowToReg
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.SingleBed
+import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Badge
 import br.com.plantaouti.data.local.entity.PatientShiftEntity
 import br.com.plantaouti.domain.calculator.MedicalCalculators
@@ -332,13 +343,41 @@ private fun PatientShiftDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "Novo Paciente no Plantão" else "Editar Paciente") },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.padding(end = 12.dp)
+                ) {
+                    Box(modifier = Modifier.padding(8.dp)) {
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        if (initial == null) "Novo Paciente" else "Editar Paciente",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Admissão e dados antropométricos do turno",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nome do paciente *") },
+                    trailingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -347,6 +386,7 @@ private fun PatientShiftDialog(
                         value = bed,
                         onValueChange = { bed = it },
                         label = { Text("Leito *") },
+                        trailingIcon = { Icon(Icons.Default.SingleBed, contentDescription = null) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -354,6 +394,7 @@ private fun PatientShiftDialog(
                         value = weight,
                         onValueChange = { weight = it },
                         label = { Text("Peso (kg) *") },
+                        trailingIcon = { Icon(Icons.Default.Scale, contentDescription = null) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
@@ -364,20 +405,25 @@ private fun PatientShiftDialog(
                         value = birthDate,
                         onValueChange = { birthDate = MedicalCalculators.formatDateMask(it) },
                         label = { Text("Nascimento (dd/mm/aaaa)") },
+                        leadingIcon = { Icon(Icons.Default.Cake, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1.3f)
                     )
-                    Card(modifier = Modifier.weight(0.7f)) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        modifier = Modifier.weight(0.7f).height(56.dp)
+                    ) {
                         Column(
-                            modifier = Modifier.padding(8.dp).fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier = Modifier.padding(4.dp).fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Text("Idade", style = MaterialTheme.typography.labelSmall)
+                            Text("Idade calc.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
                             Text(
                                 if (computedAge != null) "$computedAge anos" else "—",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -387,6 +433,7 @@ private fun PatientShiftDialog(
                     value = date,
                     onValueChange = { date = MedicalCalculators.formatDateMask(it) },
                     label = { Text("Data do plantão (dd/mm/aaaa)") },
+                    leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -395,16 +442,40 @@ private fun PatientShiftDialog(
                     value = tech,
                     onValueChange = { tech = it },
                     label = { Text("Técnico responsável") },
+                    leadingIcon = { Icon(Icons.Default.SupportAgent, contentDescription = null) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ShiftType.entries.forEach { type ->
+                Column {
+                    Text("Turno de Monitorização", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
-                            selected = shiftType == type,
-                            onClick = { if (initial == null) shiftType = type },
-                            label = { Text(type.shortLabel) },
+                            selected = shiftType == ShiftType.DIURNO,
+                            onClick = { if (initial == null) shiftType = ShiftType.DIURNO },
+                            leadingIcon = { Icon(Icons.Default.WbSunny, contentDescription = null) },
+                            label = { Text("Diurno (07h–19h)") },
                             modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = shiftType == ShiftType.NOTURNO,
+                            onClick = { if (initial == null) shiftType = ShiftType.NOTURNO },
+                            leadingIcon = { Icon(Icons.Default.Bedtime, contentDescription = null) },
+                            label = { Text("Noturno (19h–07h)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(end = 6.dp))
+                        Text(
+                            "Os dados calculam posologias em tempo real na aba Drogas.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -417,7 +488,10 @@ private fun PatientShiftDialog(
                     val w = weight.replace(",", ".").toDoubleOrNull() ?: 70.0
                     onSave(name, bed, w, date, birthDate, shiftType, tech)
                 }
-            ) { Text("Salvar") }
+            ) {
+                Icon(Icons.Default.HowToReg, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                Text("Salvar Paciente")
+            }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) { Text("Cancelar") }

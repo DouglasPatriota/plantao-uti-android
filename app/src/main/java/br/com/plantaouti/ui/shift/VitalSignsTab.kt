@@ -22,11 +22,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.Bloodtype
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeviceThermostat
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -222,6 +237,7 @@ private fun SheetValueCell(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VitalEditDialog(
     vital: VitalSignEntity,
@@ -243,12 +259,74 @@ private fun VitalEditDialog(
 
     val computedPam = remember(pa) { VitalSignCalculator.calculatePamFromString(pa) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Sinais Vitais — ${vital.hourLabel}") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header do Registro Rápido
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        modifier = Modifier.padding(end = 10.dp)
+                    ) {
+                        Box(modifier = Modifier.padding(8.dp)) {
+                            Icon(
+                                Icons.Default.MonitorHeart,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Registro Rápido", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(6.dp))
+                            AssistChip(
+                                onClick = { },
+                                label = { Text(vital.hourLabel, fontWeight = FontWeight.Bold) }
+                            )
+                        }
+                        Text("Toque nos atalhos clínicos rápidos ou digite", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Fechar")
+                }
+            }
+
+            // 1. Pressão Arterial (PA) + PAM Automática
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.MonitorHeart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 6.dp))
+                            Text("Pressão Arterial", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        }
+                        Text(
+                            "PAM: ${computedPam?.let { "$it mmHg" } ?: "—"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     OutlinedTextField(
                         value = pa,
                         onValueChange = { pa = it },
@@ -256,109 +334,112 @@ private fun VitalEditDialog(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
-                        modifier = Modifier.weight(1.3f)
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Card(modifier = Modifier.weight(0.7f)) {
-                        Column(
-                            modifier = Modifier.padding(8.dp).fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("PAM", style = MaterialTheme.typography.labelMedium)
-                            Text(
-                                computedPam?.toString() ?: "—",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-                QuickFillChipRow(
-                    options = listOf("120x80", "130x80", "140x90", "100x60"),
-                    selectedValue = pa,
-                    onSelect = { pa = it }
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumericNextField(fc, { fc = it.filter(Char::isDigit) }, "FC (bpm)", Modifier.weight(1f))
-                    NumericNextField(fr, { fr = it.filter(Char::isDigit) }, "FR (irpm)", Modifier.weight(1f))
-                }
-                QuickFillChipRow(
-                    options = listOf("60", "70", "80", "90", "100"),
-                    selectedValue = fc,
-                    onSelect = { fc = it }
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumericNextField(spo2, { spo2 = it.filter(Char::isDigit) }, "SpO₂ (%)", Modifier.weight(1f))
-                    OutlinedTextField(
-                        value = temp,
-                        onValueChange = { temp = it },
-                        label = { Text("Temp (°C)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
-                        modifier = Modifier.weight(1f)
+                    QuickFillChipRow(
+                        options = listOf("120x80", "130x80", "140x90", "100x60", "90x50"),
+                        selectedValue = pa,
+                        onSelect = { pa = it }
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Atalho SpO₂", style = MaterialTheme.typography.labelSmall)
-                        QuickFillChipRow(
-                            options = listOf("95%", "96%", "97%", "98%", "99%"),
-                            selectedValue = if (spo2.isNotBlank()) "$spo2%" else "",
-                            onSelect = { spo2 = it.replace("%", "") }
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Atalho Temp", style = MaterialTheme.typography.labelSmall)
-                        QuickFillChipRow(
-                            options = listOf("36,0", "36,5", "37,0", "37,5", "38,0"),
-                            selectedValue = temp,
-                            onSelect = { temp = it }
-                        )
-                    }
-                }
+            }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumericNextField(hgt, { hgt = it.filter(Char::isDigit) }, "HGT (mg/dL)", Modifier.weight(1f))
-                    NumericNextField(dor, { dor = it.filter(Char::isDigit).take(2) }, "Dor (0-10)", Modifier.weight(1f))
-                }
+            // 2. Frequência Cardíaca (FC) & Frequência Respiratória (FR)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NumericNextField(fc, { fc = it.filter(Char::isDigit) }, "FC (bpm)", Modifier.weight(1f))
+                NumericNextField(fr, { fr = it.filter(Char::isDigit) }, "FR (irpm)", Modifier.weight(1f))
+            }
+            QuickFillChipRow(
+                options = listOf("60", "70", "78", "80", "90", "100", "115"),
+                selectedValue = fc,
+                onSelect = { fc = it }
+            )
+
+            // 3. Saturação (SpO₂) & Temperatura (°C)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NumericNextField(spo2, { spo2 = it.filter(Char::isDigit) }, "SpO₂ (%)", Modifier.weight(1f))
                 OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Observações") },
+                    value = temp,
+                    onValueChange = { temp = it },
+                    label = { Text("Temp (°C)") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    "Faixas visuais: PAM ${thresholds.pamMin}–${thresholds.pamMax}, FC ${thresholds.fcMin}–${thresholds.fcMax}, SpO₂ ≥ ${thresholds.spo2Min}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
+                    modifier = Modifier.weight(1f)
                 )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                onSave(
-                    vital.copy(
-                        bloodPressure = pa.trim(),
-                        pam = computedPam,
-                        heartRate = fc.toIntOrNull(),
-                        respRate = fr.toIntOrNull(),
-                        spo2 = spo2.toIntOrNull()?.coerceIn(0, 100),
-                        temperature = temp.replace(",", ".").toDoubleOrNull(),
-                        hgt = hgt.toIntOrNull(),
-                        painScore = dor.toIntOrNull()?.coerceIn(0, 10),
-                        notes = notes.trim()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Atalhos SpO₂", style = MaterialTheme.typography.labelSmall)
+                    QuickFillChipRow(
+                        options = listOf("95%", "96%", "97%", "98%", "99%"),
+                        selectedValue = if (spo2.isNotBlank()) "$spo2%" else "",
+                        onSelect = { spo2 = it.replace("%", "") }
                     )
-                )
-            }) { Text("Salvar") }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) { Text("Cancelar") }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Atalhos Temp", style = MaterialTheme.typography.labelSmall)
+                    QuickFillChipRow(
+                        options = listOf("36,0", "36,5", "36,8", "37,2", "38,0"),
+                        selectedValue = temp,
+                        onSelect = { temp = it }
+                    )
+                }
+            }
+
+            // 4. HGT & Dor
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NumericNextField(hgt, { hgt = it.filter(Char::isDigit) }, "HGT (mg/dL)", Modifier.weight(1f))
+                NumericNextField(dor, { dor = it.filter(Char::isDigit).take(2) }, "Dor (0-10)", Modifier.weight(1f))
+            }
+
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Observações") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Rodapé com Ações Sticky
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f).height(48.dp)
+                ) {
+                    Text("Cancelar")
+                }
+                Button(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onSave(
+                            vital.copy(
+                                bloodPressure = pa.trim(),
+                                pam = computedPam,
+                                heartRate = fc.toIntOrNull(),
+                                respRate = fr.toIntOrNull(),
+                                spo2 = spo2.toIntOrNull()?.coerceIn(0, 100),
+                                temperature = temp.replace(",", ".").toDoubleOrNull(),
+                                hgt = hgt.toIntOrNull(),
+                                painScore = dor.toIntOrNull()?.coerceIn(0, 10),
+                                notes = notes.trim()
+                            )
+                        )
+                    },
+                    modifier = Modifier.weight(1.5f).height(48.dp)
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.padding(end = 6.dp))
+                    Text("Salvar Registro")
+                }
+            }
+            Spacer(Modifier.height(16.dp))
         }
-    )
+    }
 }
 
 @Composable
