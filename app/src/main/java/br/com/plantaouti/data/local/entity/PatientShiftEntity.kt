@@ -11,6 +11,7 @@ data class PatientShiftEntity(
     val bedNumber: String,
     val weightKg: Double,
     val shiftDate: String, // formato dd/MM/yyyy
+    val birthDate: String = "", // formato dd/MM/yyyy
     val shiftType: ShiftType,
     val technicianName: String,
     val isEnded: Boolean = false,

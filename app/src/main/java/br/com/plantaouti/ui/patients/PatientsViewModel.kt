@@ -33,6 +33,7 @@ class PatientsViewModel @Inject constructor(
         bedNumber: String,
         weightKg: Double,
         shiftDate: String,
+        birthDate: String,
         shiftType: ShiftType,
         technicianName: String,
         onCreated: (Long) -> Unit
@@ -47,6 +48,7 @@ class PatientsViewModel @Inject constructor(
                     bedNumber = bedNumber.trim(),
                     weightKg = weightKg,
                     shiftDate = shiftDate.trim(),
+                    birthDate = birthDate.trim(),
                     shiftType = shiftType,
                     technicianName = technicianName.trim()
                 )

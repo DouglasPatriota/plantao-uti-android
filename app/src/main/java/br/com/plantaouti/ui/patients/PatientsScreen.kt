@@ -50,7 +50,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material3.Badge
 import br.com.plantaouti.data.local.entity.PatientShiftEntity
+import br.com.plantaouti.domain.calculator.MedicalCalculators
 import br.com.plantaouti.domain.model.ShiftType
 import br.com.plantaouti.pdf.PdfShareAndPrintHelper
 import br.com.plantaouti.pdf.ShiftPdfGenerator
@@ -179,9 +182,9 @@ fun PatientsScreen(
             initial = null,
             defaultTechName = settings.defaultTechnicianName,
             onDismiss = { showCreateDialog = false },
-            onSave = { name, bed, weight, date, type, tech ->
+            onSave = { name, bed, weight, date, birth, type, tech ->
                 showCreateDialog = false
-                viewModel.createShift(name, bed, weight, date, type, tech) { newId ->
+                viewModel.createShift(name, bed, weight, date, birth, type, tech) { newId ->
                     onOpenShift(newId)
                 }
             }
@@ -193,13 +196,14 @@ fun PatientsScreen(
             initial = current,
             defaultTechName = settings.defaultTechnicianName,
             onDismiss = { editingShift = null },
-            onSave = { name, bed, weight, date, type, tech ->
+            onSave = { name, bed, weight, date, birth, type, tech ->
                 viewModel.updateShift(
                     current.copy(
                         patientName = name,
                         bedNumber = bed,
                         weightKg = weight,
                         shiftDate = date,
+                        birthDate = birth,
                         shiftType = type,
                         technicianName = tech
                     )
@@ -239,6 +243,8 @@ private fun PatientShiftCard(
     onEdit: () -> Unit,
     onToggleEnd: () -> Unit
 ) {
+    val age = remember(shift.birthDate) { MedicalCalculators.calculateAge(shift.birthDate) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -285,9 +291,10 @@ private fun PatientShiftCard(
             Spacer(Modifier.height(6.dp))
             Text(shift.patientName, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
+            val ageInfo = if (age != null) " • $age anos" else ""
             Text(
-                "Peso: %.1f kg • Data: %s • Téc.: %s".format(
-                    shift.weightKg, shift.shiftDate, shift.technicianName
+                "Peso: %.1f kg%s • Data: %s • Téc.: %s".format(
+                    shift.weightKg, ageInfo, shift.shiftDate, shift.technicianName
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -309,16 +316,18 @@ private fun PatientShiftDialog(
     initial: PatientShiftEntity?,
     defaultTechName: String,
     onDismiss: () -> Unit,
-    onSave: (String, String, Double, String, ShiftType, String) -> Unit
+    onSave: (name: String, bed: String, weight: Double, date: String, birthDate: String, type: ShiftType, tech: String) -> Unit
 ) {
     val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) }
     var name by remember { mutableStateOf(initial?.patientName ?: "") }
     var bed by remember { mutableStateOf(initial?.bedNumber ?: "") }
     var weight by remember { mutableStateOf(initial?.weightKg?.toString() ?: "") }
     var date by remember { mutableStateOf(initial?.shiftDate ?: today) }
+    var birthDate by remember { mutableStateOf(initial?.birthDate ?: "") }
     var tech by remember { mutableStateOf(initial?.technicianName ?: defaultTechName) }
     var shiftType by remember { mutableStateOf(initial?.shiftType ?: ShiftType.DIURNO) }
 
+    val computedAge = remember(birthDate) { MedicalCalculators.calculateAge(birthDate) }
     val canSave = name.isNotBlank() && bed.isNotBlank() && (weight.replace(",", ".").toDoubleOrNull() ?: 0.0) > 0.0
 
     AlertDialog(
@@ -350,11 +359,36 @@ private fun PatientShiftDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = birthDate,
+                        onValueChange = { birthDate = MedicalCalculators.formatDateMask(it) },
+                        label = { Text("Nascimento (dd/mm/aaaa)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1.3f)
+                    )
+                    Card(modifier = Modifier.weight(0.7f)) {
+                        Column(
+                            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Idade", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                if (computedAge != null) "$computedAge anos" else "—",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Data (dd/MM/aaaa)") },
+                    onValueChange = { date = MedicalCalculators.formatDateMask(it) },
+                    label = { Text("Data do plantão (dd/mm/aaaa)") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -381,7 +415,7 @@ private fun PatientShiftDialog(
                 enabled = canSave,
                 onClick = {
                     val w = weight.replace(",", ".").toDoubleOrNull() ?: 70.0
-                    onSave(name, bed, w, date, shiftType, tech)
+                    onSave(name, bed, w, date, birthDate, shiftType, tech)
                 }
             ) { Text("Salvar") }
         },

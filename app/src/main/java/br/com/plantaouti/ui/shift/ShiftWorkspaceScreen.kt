@@ -1,17 +1,22 @@
 package br.com.plantaouti.ui.shift
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.MonitorHeart
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,13 +44,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import br.com.plantaouti.domain.calculator.MedicalCalculators
 
 private enum class ShiftTab(val label: String, val icon: ImageVector) {
     VITALS("Sinais", Icons.Default.MonitorHeart),
     DRUGS("Drogas", Icons.Default.Medication),
     MATERIALS("Materiais", Icons.Default.Inventory2),
     FLUIDS("Balanço", Icons.Default.WaterDrop),
-    SUMMARY("Resumo", Icons.Default.Assignment)
+    SUMMARY("Resumo", Icons.Default.Assignment),
+    NOTES("Anotações", Icons.Default.Description),
+    PRINT("Impressão", Icons.Default.Print),
+    CALCULATIONS("Cálculos", Icons.Default.Calculate)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,9 +92,11 @@ fun ShiftWorkspaceScreen(
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
                         )
-                        shift?.let {
+                        shift?.let { currentShift ->
+                            val age = MedicalCalculators.calculateAge(currentShift.birthDate)
+                            val ageStr = if (age != null) " • $age anos" else ""
                             Text(
-                                "${it.shiftType.label} • %.1f kg • ${it.shiftDate}".format(it.weightKg),
+                                "${currentShift.shiftType.label} • %.1f kg%s • ${currentShift.shiftDate}".format(currentShift.weightKg, ageStr),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -100,13 +111,15 @@ fun ShiftWorkspaceScreen(
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                modifier = Modifier.horizontalScroll(rememberScrollState())
+            ) {
                 ShiftTab.entries.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label) }
+                        label = { Text(tab.label, maxLines = 1) }
                     )
                 }
             }
@@ -136,6 +149,9 @@ fun ShiftWorkspaceScreen(
                     ShiftTab.MATERIALS -> MaterialsTab(viewModel = viewModel)
                     ShiftTab.FLUIDS -> FluidBalanceTab(viewModel = viewModel)
                     ShiftTab.SUMMARY -> SummaryTab(viewModel = viewModel)
+                    ShiftTab.NOTES -> NursingNotesTab(viewModel = viewModel)
+                    ShiftTab.PRINT -> CustomPrintTab(viewModel = viewModel)
+                    ShiftTab.CALCULATIONS -> CalculationsTab(viewModel = viewModel)
                 }
             }
         }

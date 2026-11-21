@@ -29,7 +29,7 @@ import br.com.plantaouti.data.local.entity.VitalSignEntity
         MaterialUsageEntity::class,
         FluidBalanceEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

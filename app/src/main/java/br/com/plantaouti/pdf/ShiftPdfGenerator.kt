@@ -23,6 +23,14 @@ import java.io.FileOutputStream
  * - Bloco inferior dividido: Gastos com Materiais (esquerda) e Balanço Hídrico / Eliminações (direita)
  * Suporta tanto o plantão preenchido quanto uma folha em branco para preenchimento manual.
  */
+data class PdfPrintOptions(
+    val includeMaterials: Boolean = true,
+    val includeDrugs: Boolean = true,
+    val includeEvolutions: Boolean = true,
+    val includeVitals: Boolean = true,
+    val includeProcedures: Boolean = false
+)
+
 object ShiftPdfGenerator {
 
     private const val PAGE_WIDTH = 595
@@ -34,6 +42,25 @@ object ShiftPdfGenerator {
     private val lineColor = Color.rgb(160, 175, 180)
     private val textDark = Color.rgb(25, 35, 40)
     private val textMuted = Color.rgb(90, 105, 110)
+
+    fun generateCustomShiftPdf(
+        context: Context,
+        shift: PatientShiftEntity,
+        vitals: List<VitalSignEntity>,
+        infusions: List<InfusionEntity>,
+        materials: List<MaterialUsageEntity>,
+        fluids: List<FluidBalanceEntity>,
+        options: PdfPrintOptions
+    ): File {
+        return generateFilledShiftPdf(
+            context = context,
+            shift = shift,
+            vitals = if (options.includeVitals) vitals else emptyList(),
+            infusions = if (options.includeDrugs) infusions else emptyList(),
+            materials = if (options.includeMaterials) materials else emptyList(),
+            fluids = if (options.includeEvolutions) fluids else emptyList()
+        )
+    }
 
     fun generateFilledShiftPdf(
         context: Context,

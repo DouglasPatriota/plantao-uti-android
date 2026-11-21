@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -271,10 +272,20 @@ private fun VitalEditDialog(
                         }
                     }
                 }
+                QuickFillChipRow(
+                    options = listOf("120x80", "130x80", "140x90", "100x60"),
+                    onSelect = { pa = it }
+                )
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumericNextField(fc, { fc = it.filter(Char::isDigit) }, "FC (bpm)", Modifier.weight(1f))
                     NumericNextField(fr, { fr = it.filter(Char::isDigit) }, "FR (irpm)", Modifier.weight(1f))
                 }
+                QuickFillChipRow(
+                    options = listOf("60", "70", "80", "90", "100"),
+                    onSelect = { fc = it }
+                )
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumericNextField(spo2, { spo2 = it.filter(Char::isDigit) }, "SpO₂ (%)", Modifier.weight(1f))
                     OutlinedTextField(
@@ -287,6 +298,23 @@ private fun VitalEditDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Atalho SpO₂", style = MaterialTheme.typography.labelSmall)
+                        QuickFillChipRow(
+                            options = listOf("95%", "96%", "97%", "98%", "99%"),
+                            onSelect = { spo2 = it.replace("%", "") }
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Atalho Temp", style = MaterialTheme.typography.labelSmall)
+                        QuickFillChipRow(
+                            options = listOf("36,0", "36,5", "37,0", "37,5", "38,0"),
+                            onSelect = { temp = it }
+                        )
+                    }
+                }
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumericNextField(hgt, { hgt = it.filter(Char::isDigit) }, "HGT (mg/dL)", Modifier.weight(1f))
                     NumericNextField(dor, { dor = it.filter(Char::isDigit).take(2) }, "Dor (0-10)", Modifier.weight(1f))
@@ -327,6 +355,26 @@ private fun VitalEditDialog(
             OutlinedButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
+}
+
+@Composable
+private fun QuickFillChipRow(
+    options: List<String>,
+    onSelect: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        options.forEach { option ->
+            AssistChip(
+                onClick = { onSelect(option) },
+                label = { Text(option, style = MaterialTheme.typography.labelSmall) }
+            )
+        }
+    }
 }
 
 @Composable
