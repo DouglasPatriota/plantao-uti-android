@@ -274,6 +274,7 @@ private fun VitalEditDialog(
                 }
                 QuickFillChipRow(
                     options = listOf("120x80", "130x80", "140x90", "100x60"),
+                    selectedValue = pa,
                     onSelect = { pa = it }
                 )
 
@@ -283,6 +284,7 @@ private fun VitalEditDialog(
                 }
                 QuickFillChipRow(
                     options = listOf("60", "70", "80", "90", "100"),
+                    selectedValue = fc,
                     onSelect = { fc = it }
                 )
 
@@ -303,6 +305,7 @@ private fun VitalEditDialog(
                         Text("Atalho SpO₂", style = MaterialTheme.typography.labelSmall)
                         QuickFillChipRow(
                             options = listOf("95%", "96%", "97%", "98%", "99%"),
+                            selectedValue = if (spo2.isNotBlank()) "$spo2%" else "",
                             onSelect = { spo2 = it.replace("%", "") }
                         )
                     }
@@ -310,6 +313,7 @@ private fun VitalEditDialog(
                         Text("Atalho Temp", style = MaterialTheme.typography.labelSmall)
                         QuickFillChipRow(
                             options = listOf("36,0", "36,5", "37,0", "37,5", "38,0"),
+                            selectedValue = temp,
                             onSelect = { temp = it }
                         )
                     }
@@ -360,6 +364,7 @@ private fun VitalEditDialog(
 @Composable
 private fun QuickFillChipRow(
     options: List<String>,
+    selectedValue: String,
     onSelect: (String) -> Unit
 ) {
     Row(
@@ -369,9 +374,18 @@ private fun QuickFillChipRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         options.forEach { option ->
-            AssistChip(
+            val isSelected = selectedValue.trim().equals(option.trim(), ignoreCase = true)
+            FilterChip(
+                selected = isSelected,
                 onClick = { onSelect(option) },
-                label = { Text(option, style = MaterialTheme.typography.labelSmall) }
+                label = {
+                    Text(
+                        option,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
+                modifier = Modifier.height(48.dp)
             )
         }
     }

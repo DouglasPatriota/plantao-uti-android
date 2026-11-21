@@ -2,7 +2,28 @@ package br.com.plantaouti.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta Hospitalar — Azul-petróleo / Azul clínico + Verde confirmação
+// Stitch Clinical Dark Minimalist Palette
+val StitchBackground = Color(0xFF0B1326)
+val StitchSurface = Color(0xFF0B1326)
+val StitchSurfaceContainerLow = Color(0xFF131B2E)
+val StitchSurfaceContainer = Color(0xFF171F33)
+val StitchSurfaceContainerHigh = Color(0xFF222A3D)
+val StitchSurfaceContainerHighest = Color(0xFF2D3449)
+
+val StitchPrimary = Color(0xFF0066FF)
+val StitchOnPrimary = Color(0xFFFFFFFF)
+val StitchPrimaryContainer = Color(0xFF0066FF)
+val StitchOnPrimaryContainer = Color(0xFFFFFFFF)
+
+val StitchOnSurface = Color(0xFFDAE2FD)
+val StitchOnSurfaceVariant = Color(0xFFC2C6D8)
+val StitchOutline = Color(0xFF8C90A1)
+val StitchOutlineVariant = Color(0xFF424656)
+
+val StitchTertiary = Color(0xFFA5C8FF)
+val StitchError = Color(0xFFFFB4AB)
+
+// Legacy Fallbacks
 val TealPrimary = Color(0xFF006A6A)
 val TealOnPrimary = Color(0xFFFFFFFF)
 val TealPrimaryContainer = Color(0xFFCCE8E7)
@@ -25,30 +46,29 @@ val LightOnSurface = Color(0xFF161D1D)
 val LightOnSurfaceVariant = Color(0xFF3F4949)
 val LightOutline = Color(0xFF6F7979)
 
-// Tema Escuro Confortável para Plantão Noturno (baixo ofuscamento)
-val DarkPrimary = Color(0xFF6CD2D1)
-val DarkOnPrimary = Color(0xFF003737)
-val DarkPrimaryContainer = Color(0xFF004F4F)
-val DarkOnPrimaryContainer = Color(0xFF9AF0EE)
+val DarkPrimary = StitchPrimary
+val DarkOnPrimary = StitchOnPrimary
+val DarkPrimaryContainer = StitchPrimaryContainer
+val DarkOnPrimaryContainer = StitchOnPrimaryContainer
 
-val DarkSecondary = Color(0xFF93CCE8)
+val DarkSecondary = StitchTertiary
 val DarkOnSecondary = Color(0xFF00344A)
-val DarkSecondaryContainer = Color(0xFF0A4B66)
-val DarkOnSecondaryContainer = Color(0xFFCDE5F2)
+val DarkSecondaryContainer = StitchSurfaceContainerHigh
+val DarkOnSecondaryContainer = StitchOnSurface
 
-val DarkTertiary = Color(0xFF81C784)
+val DarkTertiary = StitchTertiary
 val DarkOnTertiary = Color(0xFF0B3811)
-val DarkTertiaryContainer = Color(0xFF1B5E20)
-val DarkOnTertiaryContainer = Color(0xFFD7F2D9)
+val DarkTertiaryContainer = StitchSurfaceContainerHighest
+val DarkOnTertiaryContainer = StitchOnSurface
 
-val DarkBackground = Color(0xFF0E1416)
-val DarkSurface = Color(0xFF141C1F)
-val DarkSurfaceVariant = Color(0xFF1F2B2E)
-val DarkOnSurface = Color(0xFFE0E7E8)
-val DarkOnSurfaceVariant = Color(0xFFB5C4C6)
-val DarkOutline = Color(0xFF536366)
+val DarkBackground = StitchBackground
+val DarkSurface = StitchSurface
+val DarkSurfaceVariant = StitchSurfaceContainerHigh
+val DarkOnSurface = StitchOnSurface
+val DarkOnSurfaceVariant = StitchOnSurfaceVariant
+val DarkOutline = StitchOutline
 
-// Alertas exclusivos para valores fora da faixa (uso discreto)
+// Alertas de segurança clínica
 val AlertWarningBgLight = Color(0xFFFFF4D6)
 val AlertWarningTextLight = Color(0xFF8A5A00)
 val AlertWarningBgDark = Color(0xFF3B2E0D)

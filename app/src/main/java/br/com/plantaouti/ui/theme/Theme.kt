@@ -12,10 +12,10 @@ import androidx.compose.ui.unit.sp
 import br.com.plantaouti.data.datastore.AppThemeMode
 
 private val LightColorScheme = lightColorScheme(
-    primary = TealPrimary,
-    onPrimary = TealOnPrimary,
-    primaryContainer = TealPrimaryContainer,
-    onPrimaryContainer = TealOnPrimaryContainer,
+    primary = StitchPrimary,
+    onPrimary = StitchOnPrimary,
+    primaryContainer = StitchPrimaryContainer,
+    onPrimaryContainer = StitchOnPrimaryContainer,
     secondary = HospitalBlueSecondary,
     onSecondary = HospitalBlueOnSecondary,
     secondaryContainer = HospitalBlueContainer,
@@ -34,35 +34,37 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = DarkPrimary,
-    onPrimary = DarkOnPrimary,
-    primaryContainer = DarkPrimaryContainer,
-    onPrimaryContainer = DarkOnPrimaryContainer,
-    secondary = DarkSecondary,
+    primary = StitchPrimary,
+    onPrimary = StitchOnPrimary,
+    primaryContainer = StitchPrimaryContainer,
+    onPrimaryContainer = StitchOnPrimaryContainer,
+    secondary = StitchTertiary,
     onSecondary = DarkOnSecondary,
-    secondaryContainer = DarkSecondaryContainer,
-    onSecondaryContainer = DarkOnSecondaryContainer,
-    tertiary = DarkTertiary,
+    secondaryContainer = StitchSurfaceContainerHigh,
+    onSecondaryContainer = StitchOnSurface,
+    tertiary = StitchTertiary,
     onTertiary = DarkOnTertiary,
-    tertiaryContainer = DarkTertiaryContainer,
-    onTertiaryContainer = DarkOnTertiaryContainer,
-    background = DarkBackground,
-    onBackground = DarkOnSurface,
-    surface = DarkSurface,
-    onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    outline = DarkOutline
+    tertiaryContainer = StitchSurfaceContainerHighest,
+    onTertiaryContainer = StitchOnSurface,
+    background = StitchBackground,
+    onBackground = StitchOnSurface,
+    surface = StitchSurface,
+    onSurface = StitchOnSurface,
+    surfaceVariant = StitchSurfaceContainerHigh,
+    onSurfaceVariant = StitchOnSurfaceVariant,
+    outline = StitchOutline
 )
 
 private val HospitalTypography = Typography(
     titleLarge = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, lineHeight = 26.sp),
     titleMedium = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, lineHeight = 22.sp),
     titleSmall = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, lineHeight = 20.sp),
-    bodyLarge = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Normal, lineHeight = 22.sp),
+    bodyLarge = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, lineHeight = 24.sp),
     bodyMedium = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal, lineHeight = 20.sp),
+    bodySmall = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal, lineHeight = 16.sp),
     labelLarge = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, lineHeight = 18.sp),
-    labelMedium = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, lineHeight = 16.sp)
+    labelMedium = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, lineHeight = 16.sp),
+    labelSmall = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, lineHeight = 14.sp)
 )
 
 @Composable
