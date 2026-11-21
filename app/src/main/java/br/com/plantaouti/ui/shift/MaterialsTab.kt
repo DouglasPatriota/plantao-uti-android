@@ -1,7 +1,11 @@
 package br.com.plantaouti.ui.shift
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,23 +13,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Inventory2
+import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,7 +47,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import br.com.plantaouti.ui.components.FormOutlinedTextField
+import br.com.plantaouti.ui.components.FormSectionHeader
+import br.com.plantaouti.ui.components.FullWidthActionButton
+import br.com.plantaouti.ui.components.QuickStepper
+import br.com.plantaouti.ui.components.TabularNumbersTextStyle
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MaterialsTab(viewModel: ShiftWorkspaceViewModel) {
     val materials by viewModel.materials.collectAsStateWithLifecycle()
@@ -51,6 +64,8 @@ fun MaterialsTab(viewModel: ShiftWorkspaceViewModel) {
     var quantityText by remember { mutableStateOf("1") }
     var notes by remember { mutableStateOf("") }
 
+    val currentQty = quantityText.toIntOrNull()?.coerceAtLeast(1) ?: 1
+
     val suggestions = remember(query, catalog) {
         if (query.isBlank()) catalog.take(10)
         else catalog.filter { it.name.contains(query.trim(), ignoreCase = true) }.take(8)
@@ -59,114 +74,222 @@ fun MaterialsTab(viewModel: ShiftWorkspaceViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            label = { Text("Material (digite ou escolha abaixo)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(Modifier.height(6.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                FormSectionHeader(title = "Registro Rápido de Insumos")
 
-        // Sugestões rápidas de autocomplete
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            items(suggestions, key = { it.id }) { item ->
-                AssistChip(
-                    onClick = { query = item.name },
-                    label = { Text(item.name) }
+                FormOutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = "Material (digite ou selecione abaixo) *",
+                    leadingIcon = Icons.Rounded.Search
+                )
+
+                // Sugestões de catálogo em FlowRow
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    suggestions.forEach { item ->
+                        FilterChip(
+                            selected = query.trim().equals(item.name, ignoreCase = true),
+                            onClick = { query = item.name },
+                            label = { Text(item.name, fontWeight = FontWeight.SemiBold) },
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(0.9f)) {
+                        FormOutlinedTextField(
+                            value = quantityText,
+                            onValueChange = { quantityText = it.filter(Char::isDigit).take(3) },
+                            label = "Quantidade",
+                            keyboardType = KeyboardType.Number,
+                            unitSuffix = "un."
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        QuickStepper(
+                            onDecrement = {
+                                quantityText = (currentQty - 1).coerceAtLeast(1).toString()
+                            },
+                            onIncrement = {
+                                quantityText = (currentQty + 1).toString()
+                            },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+
+                    FormOutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = "Observação (opcional)",
+                        modifier = Modifier.weight(1.1f)
+                    )
+                }
+
+                // Chips rápidos de Quantidade
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(1, 2, 5, 10, 20).forEach { q ->
+                        FilterChip(
+                            selected = currentQty == q,
+                            onClick = { quantityText = q.toString() },
+                            label = { Text("+$q un.", fontWeight = FontWeight.Bold) },
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    }
+                }
+
+                FullWidthActionButton(
+                    text = "Lançar Material no Plantão",
+                    enabled = query.isNotBlank(),
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        val qty = quantityText.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                        viewModel.addMaterial(query, qty, notes)
+                        query = ""
+                        quantityText = "1"
+                        notes = ""
+                    }
                 )
             }
         }
 
-        Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OutlinedTextField(
-                value = quantityText,
-                onValueChange = { quantityText = it.filter(Char::isDigit).take(3) },
-                label = { Text("Qtd") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.width(84.dp)
+            Text(
+                "Itens Registrados no Plantão",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text("Observação (opcional)") },
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-            Button(
-                enabled = query.isNotBlank(),
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    val qty = quantityText.toIntOrNull()?.coerceAtLeast(1) ?: 1
-                    viewModel.addMaterial(query, qty, notes)
-                    query = ""
-                    quantityText = "1"
-                    notes = ""
-                },
-                modifier = Modifier.height(52.dp)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Adicionar")
+                Text(
+                    "Total: ${materials.sumOf { it.quantity }} un.",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Itens registrados no plantão (${materials.sumOf { it.quantity }} un.)",
-            style = MaterialTheme.typography.titleSmall
-        )
-        Spacer(Modifier.height(6.dp))
-
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(materials, key = { it.id }) { usage ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(
+        if (materials.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Nenhum material registrado no leito ainda.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(materials, key = { it.id }) { usage ->
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(usage.materialName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                            if (usage.notes.isNotBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Rounded.Inventory2,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(10.dp))
+                                Column {
+                                    Text(usage.materialName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    if (usage.notes.isNotBlank()) {
+                                        Text(
+                                            usage.notes,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(
+                                    onClick = { viewModel.incrementMaterial(usage, -1) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Rounded.Remove, contentDescription = "Diminuir", tint = MaterialTheme.colorScheme.primary)
+                                }
+
                                 Text(
-                                    usage.notes,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    "${usage.quantity}",
+                                    style = MaterialTheme.typography.titleLarge.merge(TabularNumbersTextStyle),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
                                 )
-                            }
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { viewModel.incrementMaterial(usage, -1) }) {
-                                Icon(Icons.Default.Remove, contentDescription = "Diminuir")
-                            }
-                            Text(
-                                "${usage.quantity}",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(horizontal = 6.dp)
-                            )
-                            FilledTonalButton(
-                                onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    viewModel.incrementMaterial(usage, +1)
-                                },
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text("+1", fontWeight = FontWeight.Bold)
-                            }
-                            IconButton(onClick = { viewModel.deleteMaterial(usage) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remover")
+
+                                FilledTonalButton(
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.incrementMaterial(usage, +1)
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text("+1", fontWeight = FontWeight.Bold)
+                                }
+
+                                IconButton(
+                                    onClick = { viewModel.deleteMaterial(usage) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Rounded.Delete, contentDescription = "Remover", tint = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
                     }

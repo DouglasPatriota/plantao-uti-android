@@ -7,59 +7,60 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import br.com.plantaouti.data.datastore.AppThemeMode
 
-private val ClinicalDarkColorScheme = darkColorScheme(
-    primary = ClinicalPrimary,
-    onPrimary = ClinicalOnPrimary,
-    primaryContainer = ClinicalPrimaryContainer,
-    onPrimaryContainer = ClinicalOnPrimaryContainer,
-    secondary = ClinicalSecondary,
-    onSecondary = ClinicalOnSecondary,
-    secondaryContainer = ClinicalSecondaryContainer,
-    onSecondaryContainer = ClinicalOnSecondaryContainer,
-    tertiary = ClinicalTertiary,
-    onTertiary = ClinicalOnTertiary,
-    tertiaryContainer = ClinicalTertiaryContainer,
-    onTertiaryContainer = ClinicalOnTertiaryContainer,
-    background = ClinicalBackground,
-    onBackground = ClinicalOnBackground,
-    surface = ClinicalSurface,
-    onSurface = ClinicalOnSurface,
-    surfaceVariant = ClinicalSurfaceContainerHigh,
-    onSurfaceVariant = ClinicalOnSurfaceVariant,
-    outline = ClinicalOutline,
-    outlineVariant = ClinicalOutlineVariant,
-    error = ClinicalError,
-    onError = ClinicalOnError,
-    errorContainer = ClinicalErrorContainer,
-    onErrorContainer = ClinicalOnErrorContainer
-)
-
 private val ClinicalLightColorScheme = lightColorScheme(
-    primary = ClinicalPrimary,
-    onPrimary = ClinicalOnPrimary,
-    primaryContainer = ClinicalPrimaryContainer,
-    onPrimaryContainer = ClinicalOnPrimaryContainer,
-    secondary = HospitalBlueSecondary,
-    onSecondary = HospitalBlueOnSecondary,
-    secondaryContainer = HospitalBlueContainer,
-    onSecondaryContainer = HospitalBlueOnSecondaryContainer,
-    tertiary = ConfirmGreenTertiary,
-    onTertiary = ConfirmGreenOnTertiary,
-    tertiaryContainer = ConfirmGreenContainer,
-    onTertiaryContainer = ConfirmGreenOnTertiaryContainer,
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+    secondary = LightPrimary,
+    onSecondary = LightOnPrimary,
+    secondaryContainer = LightPrimaryContainer,
+    onSecondaryContainer = LightOnPrimaryContainer,
+    tertiary = ClinicalNormalGreen,
+    onTertiary = LightOnPrimary,
     background = LightBackground,
-    onBackground = LightOnSurface,
+    onBackground = LightOnBackground,
     surface = LightSurface,
     onSurface = LightOnSurface,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
-    outline = LightOutline
+    outline = LightOutline,
+    outlineVariant = LightOutlineVariant,
+    error = ClinicalCriticalRed,
+    onError = LightOnPrimary,
+    errorContainer = AlertCriticalBgLight,
+    onErrorContainer = AlertCriticalTextLight
+)
+
+private val ClinicalDarkColorScheme = darkColorScheme(
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondary = DarkPrimary,
+    onSecondary = DarkOnPrimary,
+    secondaryContainer = DarkPrimaryContainer,
+    onSecondaryContainer = DarkOnPrimaryContainer,
+    tertiary = ClinicalNormalGreen,
+    onTertiary = DarkOnPrimary,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+    error = ClinicalCriticalRed,
+    onError = DarkOnPrimary,
+    errorContainer = AlertCriticalBgDark,
+    onErrorContainer = AlertCriticalTextDark
 )
 
 @Composable
 fun PlantaoUtiTheme(
-    themeMode: AppThemeMode = AppThemeMode.DARK,
-    dynamicColor: Boolean = false, // Obrigatoriamente false conforme especificacao do DESIGN.md
+    themeMode: AppThemeMode = AppThemeMode.LIGHT, // Modo Claro como padrao conforme especificacao
+    dynamicColor: Boolean = false,                // dynamicColor desativado (false)
     content: @Composable () -> Unit
 ) {
     val isDark = when (themeMode) {
@@ -68,7 +69,6 @@ fun PlantaoUtiTheme(
         AppThemeMode.DARK -> true
     }
 
-    // dynamicColor e fixado em false para garantir conformidade ao Clinical Dark Minimalist
     val colorScheme = if (isDark) ClinicalDarkColorScheme else ClinicalLightColorScheme
 
     MaterialTheme(

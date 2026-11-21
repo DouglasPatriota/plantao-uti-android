@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.plantaouti.alarm.InfusionAlarmScheduler
 import br.com.plantaouti.data.datastore.AppSettings
+import br.com.plantaouti.data.datastore.AppThemeMode
 import br.com.plantaouti.data.datastore.SettingsDataStore
 import br.com.plantaouti.data.local.entity.PatientShiftEntity
 import br.com.plantaouti.data.repository.PlantaoRepository
@@ -27,6 +28,12 @@ class PatientsViewModel @Inject constructor(
 
     val settings: StateFlow<AppSettings> = settingsDataStore.settingsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppSettings())
+
+    fun setThemeMode(mode: AppThemeMode) {
+        viewModelScope.launch {
+            settingsDataStore.setThemeMode(mode)
+        }
+    }
 
     fun createShift(
         patientName: String,

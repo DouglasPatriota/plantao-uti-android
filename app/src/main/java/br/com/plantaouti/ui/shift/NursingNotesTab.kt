@@ -1,9 +1,12 @@
 package br.com.plantaouti.ui.shift
 
 import android.widget.Toast
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,26 +14,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +59,11 @@ import androidx.compose.ui.unit.dp
 import br.com.plantaouti.domain.model.NursingCategory
 import br.com.plantaouti.domain.model.NursingNoteCatalog
 import br.com.plantaouti.domain.model.NursingNoteTemplate
+import br.com.plantaouti.ui.components.FormOutlinedTextField
+import br.com.plantaouti.ui.components.FormSectionHeader
+import br.com.plantaouti.ui.components.FullWidthActionButton
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NursingNotesTab(viewModel: ShiftWorkspaceViewModel) {
     val context = LocalContext.current
@@ -58,6 +74,8 @@ fun NursingNotesTab(viewModel: ShiftWorkspaceViewModel) {
     var activeTemplate by remember { mutableStateOf<NursingNoteTemplate?>(null) }
     var isEditingBase by remember { mutableStateOf(false) }
     var editedText by remember { mutableStateOf("") }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val filteredTemplates = remember(searchQuery, selectedCategory) {
         NursingNoteCatalog.templates.filter { item ->
@@ -72,59 +90,47 @@ fun NursingNotesTab(viewModel: ShiftWorkspaceViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Barra de busca com indicador do Google Drive
-        OutlinedTextField(
+        FormOutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Buscar modelo de anotação...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            label = "Buscar modelo de anotação...",
+            leadingIcon = Icons.Rounded.Search
         )
 
-        Spacer(Modifier.height(6.dp))
-
-        // Badge / Indicador da pasta Registros no Google Drive
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                Icons.Default.CloudDone,
+                Icons.Rounded.CloudDone,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(end = 4.dp)
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(end = 4.dp)
             )
             Text(
-                "Pasta \"Registros\" no Google Drive • Modelos sincronizados",
+                "Pasta \"Registros\" no Google Drive • Modelos padronizados",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        Spacer(Modifier.height(10.dp))
-
-        // Filtro Horizontal (Chips)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        // Categorias em FlowRow
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             NursingCategory.entries.forEach { cat ->
                 FilterChip(
                     selected = selectedCategory == cat,
                     onClick = { selectedCategory = cat },
-                    label = { Text(cat.label) }
+                    label = { Text(cat.label, fontWeight = FontWeight.SemiBold) },
+                    shape = RoundedCornerShape(10.dp)
                 )
             }
         }
 
-        Spacer(Modifier.height(10.dp))
-
-        // Lista de Cards de Modelos
         if (filteredTemplates.isEmpty()) {
             Column(
                 modifier = Modifier
@@ -141,7 +147,7 @@ fun NursingNotesTab(viewModel: ShiftWorkspaceViewModel) {
             }
         } else {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 items(filteredTemplates, key = { it.id }) { template ->
@@ -151,29 +157,47 @@ fun NursingNotesTab(viewModel: ShiftWorkspaceViewModel) {
                             isEditingBase = false
                             editedText = template.content
                         },
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    template.title,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Spacer(Modifier.width(8.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Rounded.Description,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        template.title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                                 AssistChip(
                                     onClick = { },
-                                    label = { Text(template.category.label, style = MaterialTheme.typography.labelSmall) }
+                                    label = { Text(template.category.label, style = MaterialTheme.typography.labelSmall) },
+                                    shape = RoundedCornerShape(8.dp)
                                 )
                             }
-                            Spacer(Modifier.height(6.dp))
+                            Spacer(Modifier.height(8.dp))
                             Text(
                                 template.content,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -188,64 +212,99 @@ fun NursingNotesTab(viewModel: ShiftWorkspaceViewModel) {
         }
     }
 
-    // Modal de Visualização e Edição de Modelo
+    // Modal BottomSheet de Edição e Cópia
     activeTemplate?.let { template ->
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = { activeTemplate = null },
-            title = {
-                Text(template.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    AssistChip(
-                        onClick = { },
-                        label = { Text(template.category.label, style = MaterialTheme.typography.labelMedium) }
-                    )
-                    if (isEditingBase) {
-                        OutlinedTextField(
-                            value = editedText,
-                            onValueChange = { editedText = it },
-                            label = { Text("Edite a anotação para o paciente") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
-                        )
-                    } else {
-                        Text(
-                            template.content,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Rounded.Description,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(template.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(template.category.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    IconButton(onClick = { activeTemplate = null }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Fechar")
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(
+
+                FormSectionHeader(title = if (isEditingBase) "Editar Texto para o Leito" else "Conteúdo do Modelo")
+
+                if (isEditingBase) {
+                    OutlinedTextField(
+                        value = editedText,
+                        onValueChange = { editedText = it },
+                        label = { Text("Anotação final do paciente") },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                } else {
+                    Card(
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            template.content,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(14.dp)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { isEditingBase = true },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Icon(Icons.Rounded.EditNote, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Usar como Base e Editar Texto", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                FullWidthActionButton(
+                    text = "Copiar Texto para Prontuário",
+                    icon = Icons.Rounded.ContentCopy,
                     onClick = {
                         val textToCopy = if (isEditingBase) editedText else template.content
                         clipboardManager.setText(AnnotatedString(textToCopy))
                         Toast.makeText(context, "Texto copiado para a área de transferência!", Toast.LENGTH_SHORT).show()
                         activeTemplate = null
                     }
-                ) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text("Copiar Texto")
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        if (!isEditingBase) {
-                            isEditingBase = true
-                        } else {
-                            activeTemplate = null
-                        }
-                    }
-                ) {
-                    Icon(Icons.Default.EditNote, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text(if (isEditingBase) "Fechar" else "Usar como Base")
-                }
+                )
+
+                Spacer(Modifier.height(24.dp))
             }
-        )
+        }
     }
 }

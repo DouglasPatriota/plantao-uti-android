@@ -15,18 +15,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,6 +51,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.plantaouti.data.local.entity.FluidBalanceEntity
+import br.com.plantaouti.ui.components.FormOutlinedTextField
+import br.com.plantaouti.ui.components.FormSectionHeader
+import br.com.plantaouti.ui.components.FullWidthActionButton
+import br.com.plantaouti.ui.components.QuickStepper
+import br.com.plantaouti.ui.components.TabularNumbersTextStyle
 
 private val STOOL_ASPECT_CHIPS = listOf("Pastoso", "Semipastoso", "Líquido", "Endurecido", "Melena", "Muco")
 
@@ -63,7 +77,7 @@ fun FluidBalanceTab(viewModel: ShiftWorkspaceViewModel) {
             "Marque a via de diurese e toque em Fezes para registrar evacuações (sem registro em mL).",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         )
 
         Row(
@@ -115,7 +129,7 @@ fun FluidBalanceTab(viewModel: ShiftWorkspaceViewModel) {
                         }
                         Text(
                             text = txt,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.merge(TabularNumbersTextStyle),
                             color = if (item.stoolCount > 0) MaterialTheme.colorScheme.onSurface
                             else MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -124,7 +138,7 @@ fun FluidBalanceTab(viewModel: ShiftWorkspaceViewModel) {
             }
         }
 
-        // Linha de TOTAL fixa no rodapé da aba
+        // Linha de TOTAL
         Row(
             modifier = Modifier
                 .horizontalScroll(hScroll)
@@ -140,7 +154,7 @@ fun FluidBalanceTab(viewModel: ShiftWorkspaceViewModel) {
     }
 
     editingStoolRow?.let { current ->
-        StoolEditDialog(
+        StoolEditBottomSheet(
             item = current,
             onDismiss = { editingStoolRow = null },
             onSave = { count, aspect ->
@@ -173,7 +187,7 @@ private fun FbTextCell(label: String, width: Dp, bold: Boolean = false) {
             .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
         contentAlignment = Alignment.Center
     ) {
-        Text(label, fontWeight = if (bold) FontWeight.SemiBold else FontWeight.Normal)
+        Text(label, fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal)
     }
 }
 
@@ -201,67 +215,124 @@ private fun FbTotalCell(label: String, width: Dp) {
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.merge(TabularNumbersTextStyle),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSecondaryContainer
         )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun StoolEditDialog(
+private fun StoolEditBottomSheet(
     item: FluidBalanceEntity,
     onDismiss: () -> Unit,
     onSave: (Int, String) -> Unit
 ) {
     var count by remember { mutableIntStateOf(item.stoolCount) }
     var aspect by remember { mutableStateOf(item.stoolAspect) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { Text("Evacuações — ${item.hourLabel}") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Número de evacuações:", fontWeight = FontWeight.Medium)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { if (count > 0) count-- }) { Text("-") }
-                        Text("$count", style = MaterialTheme.typography.titleMedium)
-                        OutlinedButton(onClick = { count++ }) { Text("+") }
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Rounded.WaterDrop,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
-                }
-                Text("Aspecto (opções rápidas):", style = MaterialTheme.typography.labelMedium)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    STOOL_ASPECT_CHIPS.forEach { chip ->
-                        FilterChip(
-                            selected = aspect.equals(chip, ignoreCase = true),
-                            onClick = {
-                                aspect = chip
-                                if (count == 0) count = 1
-                            },
-                            label = { Text(chip) }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            "Registro de Evacuações — ${item.hourLabel}h",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Quantidade e consistência das fezes",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-                OutlinedTextField(
-                    value = aspect,
-                    onValueChange = { aspect = it },
-                    label = { Text("Aspecto / observação curta") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Fechar")
+                }
+            }
+
+            FormSectionHeader(title = "Contagem de Evacuações")
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$count evacuação(ões)",
+                    style = MaterialTheme.typography.titleLarge.merge(TabularNumbersTextStyle),
+                    fontWeight = FontWeight.Bold
+                )
+
+                QuickStepper(
+                    onDecrement = { if (count > 0) count-- },
+                    onIncrement = { count++ }
                 )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { onSave(count, aspect.trim()) }) { Text("Salvar") }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) { Text("Cancelar") }
+
+            FormSectionHeader(title = "Aspecto das Fezes")
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                STOOL_ASPECT_CHIPS.forEach { chip ->
+                    FilterChip(
+                        selected = aspect.equals(chip, ignoreCase = true),
+                        onClick = {
+                            aspect = chip
+                            if (count == 0) count = 1
+                        },
+                        label = { Text(chip, fontWeight = FontWeight.Bold) },
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
+            }
+
+            FormOutlinedTextField(
+                value = aspect,
+                onValueChange = { aspect = it },
+                label = "Aspecto / Observação Curta"
+            )
+
+            FullWidthActionButton(
+                text = "Salvar Evacuação",
+                onClick = { onSave(count, aspect.trim()) }
+            )
+
+            Spacer(Modifier.height(24.dp))
         }
-    )
+    }
 }

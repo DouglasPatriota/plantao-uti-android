@@ -1,9 +1,12 @@
 package br.com.plantaouti.ui.patients
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,17 +14,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Cake
+import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.LocalHospital
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.rounded.PictureAsPdf
+import androidx.compose.material.icons.rounded.Scale
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.SingleBed
+import androidx.compose.material.icons.rounded.SupportAgent
+import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -32,12 +47,14 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,23 +68,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Bedtime
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.HowToReg
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.Scale
-import androidx.compose.material.icons.filled.SingleBed
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material3.Badge
 import br.com.plantaouti.data.local.entity.PatientShiftEntity
 import br.com.plantaouti.domain.calculator.MedicalCalculators
 import br.com.plantaouti.domain.model.ShiftType
 import br.com.plantaouti.pdf.PdfShareAndPrintHelper
 import br.com.plantaouti.pdf.ShiftPdfGenerator
+import br.com.plantaouti.ui.components.FormOutlinedTextField
+import br.com.plantaouti.ui.components.FormSectionHeader
+import br.com.plantaouti.ui.components.FullWidthActionButton
+import br.com.plantaouti.ui.components.QuickStepper
+import br.com.plantaouti.ui.components.SelectableOptionCard
+import br.com.plantaouti.ui.components.ThemeToggleButton
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -98,18 +109,22 @@ fun PatientsScreen(
                     Column {
                         Text("Plantão UTI", fontWeight = FontWeight.Bold)
                         Text(
-                            "Leitos e registro de enfermagem",
+                            "Leitos e registros de enfermagem",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
                 actions = {
+                    ThemeToggleButton(
+                        currentThemeMode = settings.themeMode,
+                        onToggle = { newMode -> viewModel.setThemeMode(newMode) }
+                    )
                     IconButton(onClick = { showBlankPdfDialog = true }) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = "Folha PDF em branco")
+                        Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Folha PDF em branco")
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Configurações")
+                        Icon(Icons.Rounded.Settings, contentDescription = "Configurações")
                     }
                 }
             )
@@ -117,8 +132,11 @@ fun PatientsScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showCreateDialog = true },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Novo Paciente") }
+                icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+                text = { Text("Novo Paciente", fontWeight = FontWeight.Bold) },
+                shape = RoundedCornerShape(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             )
         }
     ) { padding ->
@@ -136,12 +154,14 @@ fun PatientsScreen(
                 FilterChip(
                     selected = !showEnded,
                     onClick = { showEnded = false },
-                    label = { Text("Em andamento (${shifts.count { !it.isEnded }})") }
+                    label = { Text("Em andamento (${shifts.count { !it.isEnded }})", fontWeight = FontWeight.SemiBold) },
+                    shape = RoundedCornerShape(12.dp)
                 )
                 FilterChip(
                     selected = showEnded,
                     onClick = { showEnded = true },
-                    label = { Text("Todos (${shifts.size})") }
+                    label = { Text("Todos (${shifts.size})", fontWeight = FontWeight.SemiBold) },
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
 
@@ -153,16 +173,25 @@ fun PatientsScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        Icons.Default.LocalHospital,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text("Nenhum paciente no plantão", style = MaterialTheme.typography.titleMedium)
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(64.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Rounded.LocalHospital,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Text("Nenhum paciente no plantão", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Toque em \"Novo Paciente\" para iniciar a folha digital do leito.",
+                        "Toque em \"Novo Paciente\" para iniciar o registro digital do leito.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,7 +199,7 @@ fun PatientsScreen(
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp, top = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(filteredShifts, key = { it.id }) { shift ->
                         PatientShiftCard(
@@ -189,7 +218,7 @@ fun PatientsScreen(
     }
 
     if (showCreateDialog) {
-        PatientShiftDialog(
+        PatientShiftBottomSheet(
             initial = null,
             defaultTechName = settings.defaultTechnicianName,
             onDismiss = { showCreateDialog = false },
@@ -203,7 +232,7 @@ fun PatientsScreen(
     }
 
     editingShift?.let { current ->
-        PatientShiftDialog(
+        PatientShiftBottomSheet(
             initial = current,
             defaultTechName = settings.defaultTechnicianName,
             onDismiss = { editingShift = null },
@@ -227,21 +256,21 @@ fun PatientsScreen(
     if (showBlankPdfDialog) {
         AlertDialog(
             onDismissRequest = { showBlankPdfDialog = false },
-            title = { Text("Gerar Folha PDF em Branco") },
+            title = { Text("Gerar Folha PDF em Branco", fontWeight = FontWeight.Bold) },
             text = { Text("Escolha o turno para preencher as horas da folha A4 em branco:") },
             confirmButton = {
                 TextButton(onClick = {
                     val file = ShiftPdfGenerator.generateBlankShiftPdf(context, ShiftType.DIURNO)
                     PdfShareAndPrintHelper.sharePdf(context, file)
                     showBlankPdfDialog = false
-                }) { Text("Diurno (07h–19h)") }
+                }) { Text("Diurno (07h–19h)", fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     val file = ShiftPdfGenerator.generateBlankShiftPdf(context, ShiftType.NOTURNO)
                     PdfShareAndPrintHelper.sharePdf(context, file)
                     showBlankPdfDialog = false
-                }) { Text("Noturno (19h–07h)") }
+                }) { Text("Noturno (19h–07h)", fontWeight = FontWeight.Bold) }
             }
         )
     }
@@ -259,13 +288,14 @@ private fun PatientShiftCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (shift.isEnded)
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             else MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -276,22 +306,24 @@ private fun PatientShiftCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AssistChip(
                         onClick = onClick,
-                        label = { Text("Leito ${shift.bedNumber}", fontWeight = FontWeight.Bold) }
+                        label = { Text("Leito ${shift.bedNumber}", fontWeight = FontWeight.Bold) },
+                        shape = RoundedCornerShape(10.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         shift.shiftType.shortLabel,
                         style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
                 Row {
                     IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Editar paciente")
+                        Icon(Icons.Rounded.Edit, contentDescription = "Editar paciente")
                     }
                     IconButton(onClick = onToggleEnd) {
                         Icon(
-                            Icons.Default.CheckCircle,
+                            Icons.Rounded.CheckCircle,
                             contentDescription = if (shift.isEnded) "Reabrir plantão" else "Encerrar plantão",
                             tint = if (shift.isEnded) MaterialTheme.colorScheme.tertiary
                             else MaterialTheme.colorScheme.onSurfaceVariant
@@ -299,8 +331,8 @@ private fun PatientShiftCard(
                     }
                 }
             }
-            Spacer(Modifier.height(6.dp))
-            Text(shift.patientName, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Text(shift.patientName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             val ageInfo = if (age != null) " • $age anos" else ""
             Text(
@@ -311,10 +343,11 @@ private fun PatientShiftCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (shift.isEnded) {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
-                    "Plantão encerrado",
+                    "✓ Plantão encerrado",
                     style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
                 )
             }
@@ -322,179 +355,220 @@ private fun PatientShiftCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun PatientShiftDialog(
+private fun PatientShiftBottomSheet(
     initial: PatientShiftEntity?,
     defaultTechName: String,
     onDismiss: () -> Unit,
     onSave: (name: String, bed: String, weight: Double, date: String, birthDate: String, type: ShiftType, tech: String) -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) }
+
     var name by remember { mutableStateOf(initial?.patientName ?: "") }
     var bed by remember { mutableStateOf(initial?.bedNumber ?: "") }
-    var weight by remember { mutableStateOf(initial?.weightKg?.toString() ?: "") }
+    var weightStr by remember { mutableStateOf(initial?.weightKg?.toString() ?: "70.0") }
     var date by remember { mutableStateOf(initial?.shiftDate ?: today) }
     var birthDate by remember { mutableStateOf(initial?.birthDate ?: "") }
     var tech by remember { mutableStateOf(initial?.technicianName ?: defaultTechName) }
     var shiftType by remember { mutableStateOf(initial?.shiftType ?: ShiftType.DIURNO) }
 
+    val currentWeightDouble = weightStr.replace(",", ".").toDoubleOrNull() ?: 70.0
     val computedAge = remember(birthDate) { MedicalCalculators.calculateAge(birthDate) }
-    val canSave = name.isNotBlank() && bed.isNotBlank() && (weight.replace(",", ".").toDoubleOrNull() ?: 0.0) > 0.0
+    val canSave = name.isNotBlank() && bed.isNotBlank() && currentWeightDouble > 0.0
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = {
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                    modifier = Modifier.padding(end = 12.dp)
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(44.dp)
                 ) {
-                    Box(modifier = Modifier.padding(8.dp)) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.PersonAdd,
+                            Icons.Rounded.PersonAdd,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
+                Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        if (initial == null) "Novo Paciente" else "Editar Paciente",
-                        style = MaterialTheme.typography.titleMedium,
+                        if (initial == null) "Novo Paciente / Leito" else "Editar Paciente",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Admissão e dados antropométricos do turno",
+                        "Identificação e dados do plantão",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nome do paciente *") },
-                    trailingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+
+            // Bloco 1: Dados do Paciente
+            FormSectionHeader(title = "Dados Básicos do Paciente")
+
+            FormOutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = "Nome completo do paciente *",
+                leadingIcon = Icons.Rounded.Person
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FormOutlinedTextField(
+                    value = bed,
+                    onValueChange = { bed = it },
+                    label = "Leito UTI *",
+                    leadingIcon = Icons.Rounded.SingleBed,
+                    modifier = Modifier.weight(1f)
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = bed,
-                        onValueChange = { bed = it },
-                        label = { Text("Leito *") },
-                        trailingIcon = { Icon(Icons.Default.SingleBed, contentDescription = null) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
+
+                Column(modifier = Modifier.weight(1.2f)) {
+                    FormOutlinedTextField(
+                        value = weightStr,
+                        onValueChange = { weightStr = it },
+                        label = "Peso *",
+                        leadingIcon = Icons.Rounded.Scale,
+                        unitSuffix = "kg",
+                        keyboardType = KeyboardType.Decimal
                     )
-                    OutlinedTextField(
-                        value = weight,
-                        onValueChange = { weight = it },
-                        label = { Text("Peso (kg) *") },
-                        trailingIcon = { Icon(Icons.Default.Scale, contentDescription = null) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = birthDate,
-                        onValueChange = { birthDate = MedicalCalculators.formatDateMask(it) },
-                        label = { Text("Nascimento (dd/mm/aaaa)") },
-                        leadingIcon = { Icon(Icons.Default.Cake, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1.3f)
-                    )
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                        modifier = Modifier.weight(0.7f).height(56.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(4.dp).fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text("Idade calc.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                            Text(
-                                if (computedAge != null) "$computedAge anos" else "—",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-                OutlinedTextField(
-                    value = date,
-                    onValueChange = { date = MedicalCalculators.formatDateMask(it) },
-                    label = { Text("Data do plantão (dd/mm/aaaa)") },
-                    leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = tech,
-                    onValueChange = { tech = it },
-                    label = { Text("Técnico responsável") },
-                    leadingIcon = { Icon(Icons.Default.SupportAgent, contentDescription = null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Column {
-                    Text("Turno de Monitorização", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = shiftType == ShiftType.DIURNO,
-                            onClick = { if (initial == null) shiftType = ShiftType.DIURNO },
-                            leadingIcon = { Icon(Icons.Default.WbSunny, contentDescription = null) },
-                            label = { Text("Diurno (07h–19h)") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = shiftType == ShiftType.NOTURNO,
-                            onClick = { if (initial == null) shiftType = ShiftType.NOTURNO },
-                            leadingIcon = { Icon(Icons.Default.Bedtime, contentDescription = null) },
-                            label = { Text("Noturno (19h–07h)") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    QuickStepper(
+                        onDecrement = {
+                            val w = (currentWeightDouble - 1.0).coerceAtLeast(1.0)
+                            weightStr = "%.1f".format(w).replace(",", ".")
+                        },
+                        onIncrement = {
+                            val w = currentWeightDouble + 1.0
+                            weightStr = "%.1f".format(w).replace(",", ".")
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FormOutlinedTextField(
+                    value = birthDate,
+                    onValueChange = { birthDate = MedicalCalculators.formatDateMask(it) },
+                    label = "Data Nascimento",
+                    leadingIcon = Icons.Rounded.Cake,
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier.weight(1.3f)
+                )
+
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    modifier = Modifier
+                        .weight(0.9f)
+                        .height(56.dp)
                 ) {
-                    Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(end = 6.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         Text(
-                            "Os dados calculam posologias em tempo real na aba Drogas.",
+                            "Idade Calculada",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Text(
+                            if (computedAge != null) "$computedAge anos" else "—",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(
+
+            // Bloco 2: Configuração do Turno
+            FormSectionHeader(title = "Configuração do Plantão")
+
+            Text("Tipo de Turno *", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                SelectableOptionCard(
+                    title = "Diurno (07h–19h)",
+                    subtitle = "Plantão 12h Dia",
+                    icon = Icons.Rounded.WbSunny,
+                    isSelected = shiftType == ShiftType.DIURNO,
+                    onClick = { if (initial == null) shiftType = ShiftType.DIURNO },
+                    modifier = Modifier.weight(1f)
+                )
+
+                SelectableOptionCard(
+                    title = "Noturno (19h–07h)",
+                    subtitle = "Plantão 12h Noite",
+                    icon = Icons.Rounded.Bedtime,
+                    isSelected = shiftType == ShiftType.NOTURNO,
+                    onClick = { if (initial == null) shiftType = ShiftType.NOTURNO },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FormOutlinedTextField(
+                    value = date,
+                    onValueChange = { date = MedicalCalculators.formatDateMask(it) },
+                    label = "Data do Plantão",
+                    leadingIcon = Icons.Rounded.CalendarToday,
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier.weight(1f)
+                )
+
+                FormOutlinedTextField(
+                    value = tech,
+                    onValueChange = { tech = it },
+                    label = "Técnico Responsável",
+                    leadingIcon = Icons.Rounded.SupportAgent,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // Botao Principal Fixo
+            FullWidthActionButton(
+                text = if (initial == null) "Iniciar Plantão do Leito" else "Salvar Alterações",
                 enabled = canSave,
                 onClick = {
-                    val w = weight.replace(",", ".").toDoubleOrNull() ?: 70.0
-                    onSave(name, bed, w, date, birthDate, shiftType, tech)
+                    onSave(name, bed, currentWeightDouble, date, birthDate, shiftType, tech)
                 }
-            ) {
-                Icon(Icons.Default.HowToReg, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text("Salvar Paciente")
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) { Text("Cancelar") }
+            )
+
+            Spacer(Modifier.height(24.dp))
         }
-    )
+    }
 }

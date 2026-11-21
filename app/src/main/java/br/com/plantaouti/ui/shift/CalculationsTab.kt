@@ -4,25 +4,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +39,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.plantaouti.domain.calculator.MedicalCalculators
+import br.com.plantaouti.ui.components.FormOutlinedTextField
+import br.com.plantaouti.ui.components.FormSectionHeader
+import br.com.plantaouti.ui.components.TabularNumbersTextStyle
 
 private enum class CalcType(val label: String) {
     DILUTION("Diluição"),
@@ -45,6 +50,7 @@ private enum class CalcType(val label: String) {
     INFUSION("Infusão Contínua")
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CalculationsTab(viewModel: ShiftWorkspaceViewModel) {
     val shift by viewModel.shift.collectAsStateWithLifecycle()
@@ -54,25 +60,28 @@ fun CalculationsTab(viewModel: ShiftWorkspaceViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(14.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Banner Fixo de Alerta Âmbar
+        // Banner Fixo de Alerta
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFFFFB74D), RoundedCornerShape(12.dp)),
+                .border(1.dp, Color(0xFFFFB74D), RoundedCornerShape(16.dp)),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF33291A)),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(16.dp)
         ) {
             Row(
                 modifier = Modifier.padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.Warning,
+                    Icons.Rounded.Warning,
                     contentDescription = "Aviso Beta",
                     tint = Color(0xFFFFB74D),
-                    modifier = Modifier.padding(end = 10.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(end = 10.dp)
                 )
                 Text(
                     "Ferramenta em fase de testes. Sempre conferir todos os cálculos antes da administração de medicamentos.",
@@ -83,24 +92,22 @@ fun CalculationsTab(viewModel: ShiftWorkspaceViewModel) {
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        // Seletor de Calculadora (FilterChips em FlowRow)
+        Text("Tipo de Cálculo Médico", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-        // Seletor de Calculadora (FilterChips)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             CalcType.entries.forEach { calc ->
                 FilterChip(
                     selected = selectedCalc == calc,
                     onClick = { selectedCalc = calc },
-                    label = { Text(calc.label) },
-                    modifier = Modifier.weight(1f)
+                    label = { Text(calc.label, fontWeight = FontWeight.Bold) },
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
         }
-
-        Spacer(Modifier.height(16.dp))
 
         when (selectedCalc) {
             CalcType.DILUTION -> DilutionCalculatorCard()
@@ -108,6 +115,8 @@ fun CalculationsTab(viewModel: ShiftWorkspaceViewModel) {
             CalcType.DRIP -> DripRateCalculatorCard()
             CalcType.INFUSION -> ContinuousInfusionCalculatorCard(patientWeight = shift?.weightKg ?: 70.0)
         }
+
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -127,49 +136,47 @@ private fun DilutionCalculatorCard() {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Cálculo de Diluição de Medicamentos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            FormSectionHeader(title = "Cálculo de Diluição de Medicamentos")
 
-            OutlinedTextField(
+            FormOutlinedTextField(
                 value = drugName,
                 onValueChange = { drugName = it },
-                label = { Text("Nome da medicação (opcional)") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Nome da medicação (opcional)"
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FormOutlinedTextField(
                     value = dose,
                     onValueChange = { dose = it },
-                    label = { Text("Dose prescrita (mg)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Dose prescrita",
+                    unitSuffix = "mg",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                FormOutlinedTextField(
                     value = presentation,
                     onValueChange = { presentation = it },
-                    label = { Text("Apresentação (mg)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Apresentação",
+                    unitSuffix = "mg",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            OutlinedTextField(
+            FormOutlinedTextField(
                 value = volume,
                 onValueChange = { volume = it },
-                label = { Text("Volume da ampola (mL)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Volume da ampola",
+                unitSuffix = "mL",
+                keyboardType = KeyboardType.Decimal
             )
-
-            Spacer(Modifier.height(4.dp))
 
             ResultCard(
                 title = "Volume a administrar:",
@@ -194,41 +201,39 @@ private fun RuleOfThreeCalculatorCard() {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Regra de Três Proporcional", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            FormSectionHeader(title = "Regra de Três Proporcional")
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FormOutlinedTextField(
                     value = available,
                     onValueChange = { available = it },
-                    label = { Text("Qtd. disponível (A)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Qtd. disponível (A)",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                FormOutlinedTextField(
                     value = vehicleVolume,
                     onValueChange = { vehicleVolume = it },
-                    label = { Text("Volume veículo (mL)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Volume veículo",
+                    unitSuffix = "mL",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            OutlinedTextField(
+            FormOutlinedTextField(
                 value = prescribed,
                 onValueChange = { prescribed = it },
-                label = { Text("Qtd. prescrita (C)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Qtd. prescrita (C)",
+                keyboardType = KeyboardType.Decimal
             )
-
-            Spacer(Modifier.height(4.dp))
 
             ResultCard(
                 title = "Resultado calculado (X):",
@@ -251,34 +256,35 @@ private fun DripRateCalculatorCard() {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Cálculo de Gotejamento de Soro", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            FormSectionHeader(title = "Cálculo de Gotejamento de Soro")
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FormOutlinedTextField(
                     value = volume,
                     onValueChange = { volume = it },
-                    label = { Text("Volume total (mL)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Volume total",
+                    unitSuffix = "mL",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                FormOutlinedTextField(
                     value = hours,
                     onValueChange = { hours = it },
-                    label = { Text("Tempo (horas)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Tempo",
+                    unitSuffix = "horas",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(Modifier.height(4.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ResultCard(
                     title = "Macrogotas:",
                     value = dripResult?.let { "%.1f got/min".format(it.dropsPerMin) } ?: "—",
@@ -309,41 +315,41 @@ private fun ContinuousInfusionCalculatorCard(patientWeight: Double) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Infusão Contínua (Vasoativos)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            FormSectionHeader(title = "Infusão Contínua (Vasoativos)")
 
-            OutlinedTextField(
+            FormOutlinedTextField(
                 value = weightStr,
                 onValueChange = { weightStr = it },
-                label = { Text("Peso do paciente (kg)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Peso do paciente",
+                unitSuffix = "kg",
+                keyboardType = KeyboardType.Decimal
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FormOutlinedTextField(
                     value = doseStr,
                     onValueChange = { doseStr = it },
-                    label = { Text("Dose (mcg/kg/min)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Dose desejada",
+                    unitSuffix = "mcg/kg/min",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                FormOutlinedTextField(
                     value = concStr,
                     onValueChange = { concStr = it },
-                    label = { Text("Concentração (mcg/mL)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
+                    label = "Concentração solução",
+                    unitSuffix = "mcg/mL",
+                    keyboardType = KeyboardType.Decimal,
                     modifier = Modifier.weight(1f)
                 )
             }
-
-            Spacer(Modifier.height(4.dp))
 
             ResultCard(
                 title = "Taxa da Bomba (mL/h):",
@@ -361,18 +367,19 @@ private fun ResultCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium.merge(TabularNumbersTextStyle),
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary
             )
         }

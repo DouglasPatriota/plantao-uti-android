@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.plantaouti.alarm.InfusionAlarmScheduler
 import br.com.plantaouti.data.datastore.AppSettings
+import br.com.plantaouti.data.datastore.AppThemeMode
 import br.com.plantaouti.data.datastore.SettingsDataStore
 import br.com.plantaouti.data.local.entity.DrugCatalogEntity
 import br.com.plantaouti.data.local.entity.FluidBalanceEntity
@@ -61,6 +62,12 @@ class ShiftWorkspaceViewModel @Inject constructor(
 
     val settings: StateFlow<AppSettings> = settingsDataStore.settingsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppSettings())
+
+    fun setThemeMode(mode: AppThemeMode) {
+        viewModelScope.launch {
+            settingsDataStore.setThemeMode(mode)
+        }
+    }
 
     private val _feedback = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val feedback = _feedback.asSharedFlow()

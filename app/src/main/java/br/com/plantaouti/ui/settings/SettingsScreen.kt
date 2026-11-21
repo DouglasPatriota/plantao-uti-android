@@ -3,35 +3,50 @@ package br.com.plantaouti.ui.settings
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Medication
+import androidx.compose.material.icons.rounded.NightsStay
+import androidx.compose.material.icons.rounded.Restore
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.SupportAgent
+import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,8 +66,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.plantaouti.data.datastore.AppThemeMode
 import br.com.plantaouti.data.local.entity.DrugCatalogEntity
+import br.com.plantaouti.ui.components.FormOutlinedTextField
+import br.com.plantaouti.ui.components.FormSectionHeader
+import br.com.plantaouti.ui.components.FullWidthActionButton
+import br.com.plantaouti.ui.components.SelectableOptionCard
+import br.com.plantaouti.ui.components.ThemeToggleButton
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -78,7 +98,13 @@ fun SettingsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
-                title = { Text("Configurações & LGPD") }
+                title = { Text("Configurações & LGPD", fontWeight = FontWeight.Bold) },
+                actions = {
+                    ThemeToggleButton(
+                        currentThemeMode = settings.themeMode,
+                        onToggle = { newMode -> viewModel.setThemeMode(newMode) }
+                    )
+                }
             )
         }
     ) { padding ->
@@ -91,60 +117,82 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 1. Aparência
-            SectionTitle("Aparência e Plantão")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AppThemeMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = settings.themeMode == mode,
-                        onClick = { viewModel.setThemeMode(mode) },
-                        label = { Text(mode.label.substringBefore(" ")) }
-                    )
-                }
+            FormSectionHeader(title = "Aparência e Plantão")
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                SelectableOptionCard(
+                    title = "Modo Claro",
+                    subtitle = "Padrão clínico gelo",
+                    icon = Icons.Rounded.WbSunny,
+                    isSelected = settings.themeMode == AppThemeMode.LIGHT,
+                    onClick = { viewModel.setThemeMode(AppThemeMode.LIGHT) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                SelectableOptionCard(
+                    title = "Modo Escuro",
+                    subtitle = "Plantão noturno grafite",
+                    icon = Icons.Rounded.NightsStay,
+                    isSelected = settings.themeMode == AppThemeMode.DARK,
+                    onClick = { viewModel.setThemeMode(AppThemeMode.DARK) },
+                    modifier = Modifier.weight(1f)
+                )
             }
-            OutlinedTextField(
+
+            FormOutlinedTextField(
                 value = techName,
                 onValueChange = {
                     techName = it
                     viewModel.setTechnicianName(it)
                 },
-                label = { Text("Nome padrão do técnico") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                label = "Nome padrão do técnico responsável",
+                leadingIcon = Icons.Rounded.SupportAgent
             )
 
             HorizontalDivider()
 
             // 2. Alarmes de Infusão
-            SectionTitle("Alarmes de Fim de Infusão")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
+            FormSectionHeader(title = "Alarmes de Fim de Infusão")
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                FormOutlinedTextField(
                     value = alarm1,
                     onValueChange = { alarm1 = it.filter(Char::isDigit).take(3) },
-                    label = { Text("1º aviso (min antes)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
+                    label = "1º aviso",
+                    unitSuffix = "min",
+                    keyboardType = KeyboardType.Number,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+
+                FormOutlinedTextField(
                     value = alarm2,
                     onValueChange = { alarm2 = it.filter(Char::isDigit).take(2) },
-                    label = { Text("2º aviso (min antes)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
+                    label = "2º aviso",
+                    unitSuffix = "min",
+                    keyboardType = KeyboardType.Number,
                     modifier = Modifier.weight(1f)
                 )
-                Button(onClick = {
-                    viewModel.setAlarmMinutes(alarm1.toIntOrNull() ?: 30, alarm2.toIntOrNull() ?: 10)
-                }) { Text("Salvar") }
             }
+
+            FullWidthActionButton(
+                text = "Salvar Tempos de Alarme",
+                onClick = {
+                    viewModel.setAlarmMinutes(alarm1.toIntOrNull() ?: 30, alarm2.toIntOrNull() ?: 10)
+                }
+            )
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !viewModel.alarmScheduler.canScheduleExactAlarms()) {
                 OutlinedButton(
                     onClick = {
                         context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
-                    Text("Permitir Alarmes Exatos (Android 12+)")
+                    Text("Permitir Alarmes Exatos (Android 12+)", fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -156,34 +204,56 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SectionTitle("Catálogo de Drogas (${drugCatalog.size})")
+                FormSectionHeader(title = "Catálogo de Drogas (${drugCatalog.size})")
                 Row {
                     IconButton(onClick = { showNewDrugDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Adicionar droga")
+                        Icon(Icons.Rounded.Add, contentDescription = "Adicionar droga", tint = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = { viewModel.restoreDefaultDrugs() }) {
-                        Icon(Icons.Default.Restore, contentDescription = "Restaurar padrão")
+                        Icon(Icons.Rounded.Restore, contentDescription = "Restaurar padrão", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
+
             drugCatalog.forEach { drug ->
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(drug.name, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "${drug.unit} • Ref.: ${drug.referenceRangeLabel}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Rounded.Medication, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Column {
+                                Text(drug.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "${drug.unit} • Ref.: ${drug.referenceRangeLabel}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        TextButton(onClick = { showDrugDialog = drug }) { Text("Editar") }
-                        IconButton(onClick = { viewModel.deleteDrug(drug) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Remover droga")
+
+                        Row {
+                            TextButton(onClick = { showDrugDialog = drug }) { Text("Editar", fontWeight = FontWeight.Bold) }
+                            IconButton(onClick = { viewModel.deleteDrug(drug) }) {
+                                Icon(Icons.Rounded.Delete, contentDescription = "Remover droga", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
@@ -192,72 +262,103 @@ fun SettingsScreen(
             HorizontalDivider()
 
             // 4. Privacidade e Segurança (LGPD)
-            SectionTitle("Privacidade e Segurança (LGPD)")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Bloquear captura de tela (FLAG_SECURE)", fontWeight = FontWeight.Medium)
-                    Text(
-                        "Impede prints e gravação nas telas com dados de pacientes.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                Switch(checked = settings.flagSecureEnabled, onCheckedChange = { viewModel.setFlagSecure(it) })
-            }
+            FormSectionHeader(title = "Privacidade e Segurança (LGPD)")
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Bloqueio do app (Biometria / PIN)", fontWeight = FontWeight.Medium)
-                    Text(
-                        "Bloqueia após ${settings.inactivityTimeoutMinutes} min de inatividade.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                Switch(checked = settings.appLockEnabled, onCheckedChange = { viewModel.setAppLock(it) })
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = pinInput,
-                    onValueChange = { pinInput = it.filter(Char::isDigit).take(6) },
-                    label = { Text("Definir PIN (4–6 dígitos)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                Button(
-                    enabled = pinInput.length >= 4,
-                    onClick = {
-                        viewModel.setPin(pinInput)
-                        pinInput = ""
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Bloquear captura de tela (FLAG_SECURE)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Impede prints e gravação nas telas com dados de pacientes.",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(checked = settings.flagSecureEnabled, onCheckedChange = { viewModel.setFlagSecure(it) })
                     }
-                ) { Text("Salvar PIN") }
+
+                    HorizontalDivider()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Bloqueio do app (Biometria / PIN)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Bloqueia após ${settings.inactivityTimeoutMinutes} min de inatividade.",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(checked = settings.appLockEnabled, onCheckedChange = { viewModel.setAppLock(it) })
+                    }
+
+                    FormOutlinedTextField(
+                        value = pinInput,
+                        onValueChange = { pinInput = it.filter(Char::isDigit).take(6) },
+                        label = "Definir novo PIN (4–6 dígitos)",
+                        leadingIcon = Icons.Rounded.Lock,
+                        keyboardType = KeyboardType.NumberPassword
+                    )
+
+                    Button(
+                        enabled = pinInput.length >= 4,
+                        onClick = {
+                            viewModel.setPin(pinInput)
+                            pinInput = ""
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text("Salvar Novo PIN", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
 
             Button(
                 onClick = { showEraseConfirm = true },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
-                Text("Apagar Todos os Dados dos Plantões")
+                Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Apagar Todos os Dados dos Plantões", fontWeight = FontWeight.Bold)
             }
 
             HorizontalDivider()
 
             // 5. Termos e Sobre
-            SectionTitle("Sobre e Termos de Uso")
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Plantão UTI v1.0.0", fontWeight = FontWeight.Bold)
+            FormSectionHeader(title = "Sobre e Proteção de Dados")
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Plantão UTI v1.0.0", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
                     Text(
-                        "Aviso Clínico Importante: Este aplicativo é uma ferramenta auxiliar de registro de enfermagem (substituindo a folha de papel). Ele NÃO calcula, NÃO prescreve e NÃO sugere doses de medicamentos — apenas registra os valores informados pelo profissional de saúde.",
+                        "Aviso Clínico Importante: Este aplicativo é uma ferramenta auxiliar de registro de enfermagem. Ele NÃO calcula, NÃO prescreve e NÃO sugere doses de medicamentos — apenas registra os valores informados pelo profissional de saúde.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -267,6 +368,7 @@ fun SettingsScreen(
                     )
                 }
             }
+
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -274,12 +376,12 @@ fun SettingsScreen(
     if (showEraseConfirm) {
         AlertDialog(
             onDismissRequest = { showEraseConfirm = false },
-            title = { Text("Apagar todos os plantões?") },
+            title = { Text("Apagar todos os plantões?", fontWeight = FontWeight.Bold) },
             text = { Text("Esta ação remove permanentemente todos os pacientes, sinais vitais, infusões, materiais e balanços registrados neste aparelho.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.eraseAllShiftData { showEraseConfirm = false }
-                }) { Text("Apagar Tudo", color = MaterialTheme.colorScheme.error) }
+                }) { Text("Apagar Tudo", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showEraseConfirm = false }) { Text("Cancelar") }
@@ -304,11 +406,6 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-}
-
-@Composable
 private fun DrugEditorDialog(
     initial: DrugCatalogEntity?,
     onDismiss: () -> Unit,
@@ -322,27 +419,25 @@ private fun DrugEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "Nova Droga no Catálogo" else "Editar Droga") },
+        title = { Text(if (initial == null) "Nova Droga no Catálogo" else "Editar Droga", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome *") }, singleLine = true)
-                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("Unidade *") }, singleLine = true)
-                OutlinedTextField(value = refLabel, onValueChange = { refLabel = it }, label = { Text("Texto da faixa de referência") }, singleLine = true)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                FormOutlinedTextField(value = name, onValueChange = { name = it }, label = "Nome da droga *")
+                FormOutlinedTextField(value = unit, onValueChange = { unit = it }, label = "Unidade (ex.: mcg/kg/min) *")
+                FormOutlinedTextField(value = refLabel, onValueChange = { refLabel = it }, label = "Texto da faixa de referência")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
+                    FormOutlinedTextField(
                         value = minText,
                         onValueChange = { minText = it },
-                        label = { Text("Mín") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
+                        label = "Mín",
+                        keyboardType = KeyboardType.Decimal,
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
+                    FormOutlinedTextField(
                         value = maxText,
                         onValueChange = { maxText = it },
-                        label = { Text("Máx") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
+                        label = "Máx",
+                        keyboardType = KeyboardType.Decimal,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -364,7 +459,7 @@ private fun DrugEditorDialog(
                         )
                     )
                 }
-            ) { Text("Salvar") }
+            ) { Text("Salvar", fontWeight = FontWeight.Bold) }
         },
         dismissButton = { OutlinedButton(onClick = onDismiss) { Text("Cancelar") } }
     )

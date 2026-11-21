@@ -13,16 +13,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.rounded.PictureAsPdf
+import androidx.compose.material.icons.rounded.Print
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -44,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.plantaouti.pdf.PdfPrintOptions
 import br.com.plantaouti.pdf.PdfShareAndPrintHelper
 import br.com.plantaouti.pdf.ShiftPdfGenerator
+import br.com.plantaouti.ui.components.FullWidthActionButton
 
 @Composable
 fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
@@ -61,7 +62,6 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
     var incProcedures by remember { mutableStateOf(false) }
 
     val allSelected = incMaterials && incDrugs && incEvolutions && incVitals && incProcedures
-
     val currentShift = shift
 
     Column(
@@ -73,7 +73,7 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
     ) {
         Text(
             "Impressão de Relatório Personalizado",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
 
@@ -83,7 +83,6 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Opção Relatório Completo
         PrintOptionCard(
             title = "Relatório Completo (Selecionar Todos)",
             subtitle = "Marcar todas as seções clínicas abaixo",
@@ -132,13 +131,13 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
             onCheckedChange = { incProcedures = it }
         )
 
-        Spacer(Modifier.height(8.dp))
-
-        // Miniatura de pré-visualização A4
+        // Miniatura A4
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(16.dp)
         ) {
             Row(
                 modifier = Modifier.padding(14.dp),
@@ -149,20 +148,20 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
                         .width(44.dp)
                         .height(60.dp)
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Default.PictureAsPdf,
+                        Icons.Rounded.PictureAsPdf,
                         contentDescription = "Prévia PDF A4",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 Spacer(Modifier.width(14.dp))
                 Column {
-                    Text("Folha A4 — Layout UTI", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Folha A4 — Layout UTI", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
-                        "Pronto para salvar ou imprimir em 1 página",
+                        "Formatação limpa e pronta para prontuário físico ou PDF",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,12 +169,9 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
             }
         }
 
-        Spacer(Modifier.height(8.dp))
-
-        // Botões de Ação na Área Inferior
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             OutlinedButton(
                 onClick = {
@@ -194,10 +190,12 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
                         Toast.makeText(context, "Nenhum paciente selecionado", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier.weight(1f)
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f).height(52.dp)
             ) {
-                Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text("Prévia")
+                Icon(Icons.Rounded.Visibility, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Prévia", fontWeight = FontWeight.Bold)
             }
 
             OutlinedButton(
@@ -217,14 +215,18 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
                         Toast.makeText(context, "Nenhum paciente selecionado", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier.weight(1f)
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f).height(52.dp)
             ) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text("Compartilhar")
+                Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Compartilhar", fontWeight = FontWeight.Bold)
             }
         }
 
-        Button(
+        FullWidthActionButton(
+            text = "Imprimir Relatório Personalizado (A4)",
+            icon = Icons.Rounded.Print,
             onClick = {
                 if (currentShift != null) {
                     val file = ShiftPdfGenerator.generateCustomShiftPdf(
@@ -240,12 +242,10 @@ fun CustomPrintTab(viewModel: ShiftWorkspaceViewModel) {
                 } else {
                     Toast.makeText(context, "Nenhum paciente selecionado", Toast.LENGTH_SHORT).show()
                 }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.padding(end = 6.dp))
-            Text("Imprimir Relatório A4")
-        }
+            }
+        )
+
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -259,7 +259,13 @@ private fun PrintOptionCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .border(
+                if (checked) 2.dp else 1.dp,
+                if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                RoundedCornerShape(16.dp)
+            )
             .clickable { onCheckedChange(!checked) },
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (checked)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
@@ -267,16 +273,16 @@ private fun PrintOptionCard(
         )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = checked,
                 onCheckedChange = onCheckedChange
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(10.dp))
             Column {
-                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
