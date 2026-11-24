@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.Cake
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.LocalHospital
 import androidx.compose.material.icons.rounded.Person
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.rounded.SupportAgent
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -99,6 +101,7 @@ fun PatientsScreen(
     var editingShift by remember { mutableStateOf<PatientShiftEntity?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var showBlankPdfDialog by remember { mutableStateOf(false) }
+    var shiftToDelete by remember { mutableStateOf<PatientShiftEntity?>(null) }
 
     val filteredShifts = remember(shifts, showEnded) {
         if (showEnded) shifts else shifts.filter { !it.isEnded }
@@ -211,7 +214,8 @@ fun PatientsScreen(
                             onToggleEnd = {
                                 if (shift.isEnded) viewModel.reopenShift(shift)
                                 else viewModel.endShift(shift)
-                            }
+                            },
+                            onDelete = { shiftToDelete = shift }
                         )
                     }
                 }
@@ -251,6 +255,30 @@ fun PatientsScreen(
                     )
                 )
                 editingShift = null
+            },
+            onDelete = {
+                editingShift = null
+                shiftToDelete = current
+            }
+        )
+    }
+
+    shiftToDelete?.let { current ->
+        AlertDialog(
+            onDismissRequest = { shiftToDelete = null },
+            title = { Text("Excluir Paciente", fontWeight = FontWeight.Bold) },
+            text = { Text("Deseja realmente excluir o paciente ${current.patientName} (Leito ${current.bedNumber})? Esta ação é irreversível e apagará todos os dados vinculados a este plantão.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteShift(current)
+                        shiftToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Excluir", fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { shiftToDelete = null }) { Text("Cancelar") }
             }
         )
     }
@@ -283,7 +311,8 @@ private fun PatientShiftCard(
     shift: PatientShiftEntity,
     onClick: () -> Unit,
     onEdit: () -> Unit,
-    onToggleEnd: () -> Unit
+    onToggleEnd: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val age = remember(shift.birthDate) { MedicalCalculators.calculateAge(shift.birthDate) }
 
@@ -320,6 +349,13 @@ private fun PatientShiftCard(
                     )
                 }
                 Row {
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            Icons.Rounded.Delete,
+                            contentDescription = "Excluir paciente",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Rounded.Edit, contentDescription = "Editar paciente")
                     }
@@ -363,7 +399,8 @@ private fun PatientShiftBottomSheet(
     initial: PatientShiftEntity?,
     defaultTechName: String,
     onDismiss: () -> Unit,
-    onSave: (name: String, bed: String, weight: Double, date: String, birthDate: String, type: ShiftType, tech: String) -> Unit
+    onSave: (name: String, bed: String, weight: Double, date: String, birthDate: String, type: ShiftType, tech: String) -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) }
@@ -570,6 +607,20 @@ private fun PatientShiftBottomSheet(
                     onSave(name, bed, currentWeightDouble, date, birthDate, shiftType, tech)
                 }
             )
+
+            if (initial != null && onDelete != null) {
+                Spacer(Modifier.height(4.dp))
+                OutlinedButton(
+                    onClick = onDelete,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Excluir Paciente do Plantão", fontWeight = FontWeight.Bold)
+                }
+            }
 
             Spacer(Modifier.height(24.dp))
         }
